@@ -1,0 +1,1003 @@
+Mixins :- One of the big wins of using class-based views is that it allows us to easily compose reusables bits of behaviour.
+
+---> The create/retrieve/update/delete operations that we've been using so far are going to be pretty similar for any model-backed API views we create.
+
+---> Those bit of common behaviour are implemented in REST framework's mixin classes.
+
+---> The mixin classes provide the actions that are used to provide the basic view behavior.
+
+---> The mixins classes can be imported from rest_framework.mixins
+
+Note :- That the mixin classes provides actions methods rather than defining the handler methods,such as get() and post(),directly.This allows for more flexible composition of behavior.
+
+Types of Mixins classes :- 
+
+1. ListModelMixin
+2. CreateModelMixin
+3. RetrieveModelMixin
+4. UpdateModelMixin
+ 
+1. ListModelMixin :- Its provides a list (request,*args,**kwargs) method,that implements listing a queryset.
+
+--> If the queryset is populated, this returns a 200 OK respone with a serialized representation of the queryset as the body of the response.The response data may optionally be paginated.
+
+--> from rest_framework.mixins import ListModelMixin
+--> from rest_framework.generics import GenericAPIView
+
+Examples :- 
+
+from rest_framework.mixins import ListModelMixin
+from rest_framework.generics import GenericAPIView
+class StudentList(ListModelMixin,GenericAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+	def get(self,request,*args,**kwargs):
+		return self.list(request,*args,**kwargs)
+
+2. CreateModelMixin :- It is provides a create (request,*args,**kwargs) method, that implements creating and saving a new model instance.
+
+--> If an object is created this returns a 201 Created responsem, with a serialized repersentation of the object as the body of the response.If the repersentation contains a key name url, then the Location header of the response will be populated with the values.
+
+--> If the request data provided for creatinf the object was invalid,a 400 Bad Request response will be returned, with the error datails as the body of the response.
+
+Examples :- 
+
+from rest_framework.mixins import CreateModelMixin
+from rest_framework.generics import GenericAPIView
+class StudentCreate(CreateModelMixin,GenericAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+	def post(self,request,*args,**kwargs):
+		return self.create(request,*args,**kwargs)
+
+
+3. RetrieveModelMixin :- It provides a retrieve(request,*args,**kwargs) method,that implements returning an existing model instance in a respone.
+
+--> If an object can be  retrieved this returns a 200 OK respone, with a serialized repersentation of the objectas the body of the respone.Otherwise it will return a 404 Not Found.
+
+Examples :- 
+
+from rest_framework.mixins import RetrieveModelMixin
+from rest_framework.generics import GenericAPIView
+
+class StudentCreate(RetrieveModelMixin,GenericAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+	def get(self,request,*args,**kwargs):
+		return self.retrieve(request,*args,**kwargs)
+
+3. UpdateModelMixin :- It provide a update(request,*args,**kwargs) method,that implements updating
+and saving an existing model instance.
+
+ --> It also provide a partial_update(request,*args,**kwargs) method, which is similar to the update method,except that all fields for the update will be optional.This allows support for HTTP PATCH requests.
+
+ --> If an object is updated this returns a 200 OK respone,with a serialized repersentation of the object as the body of the respone.
+
+ --> If the request data provided for updating the object was invalid, a 400 Bad Request respone will be returned, with the error details as the body of the respone.
+
+ Examples :- 
+
+from rest_framework.mixins import UpdateModelMixin
+from rest_framework.generics import GenericAPIView
+
+class StudentCreate(UpdateModelMixin,GenericAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+	def get(self,request,*args,**kwargs):
+		return self.update(request,*args,**kwargs)
+
+
+4. DestroyModelMixin :- It provide a destroy (request,*args,**kwargs) method,that implements deletion of an existing model instance.
+
+--> If an object is delete this returns a 204 No Content response,otherwise it will return a 404 Not Found.
+
+
+ Examples :- (views.py)
+
+from rest_framework.mixins import DestroyModelMixin
+from rest_framework.generics import GenericAPIView
+
+class StudentCreate(DestroyModelMixin,GenericAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+	def get(self,request,*args,**kwargs):
+		return self.destroy(request,*args,**kwargs)
+
+
+Practical Examples :- 
+
+# GenericAPIView and  Model Mixin 
+
+views.py :-
+
+from .models import Student
+from .serializers import StudentSerializer
+from rest_framework.generics import GenericAPIView
+from rest_framework.mixins import ListModelMixin,CreateModelMixin,RetrieveModelMixin,UpdateModelMixin,DestroyModelMixin
+
+
+class StudentList(GenericAPIView , ListModelMixin):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+	def get(self,request,*args,**kwargs):
+		return self.list(request,*args,**kwargs)
+
+
+
+class StudentCreate(GenericAPIView , CreateModelMixin):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+	def post(self,request,*args,**kwargs):
+		return self.create(request,*args,**kwargs)
+
+
+class StudentRetrive(GenericAPIView , RetrieveModelMixin):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+	def get(self,request,*args,**kwargs):
+		return self.retrieve(request,*args,**kwargs)
+
+
+class StudentUpdate(GenericAPIView , UpdateModelMixin):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+	def put(self,request,*args,**kwargs):
+		return self.update(request,*args,**kwargs)
+
+
+class StudentDestroy(GenericAPIView , DestroyModelMixin):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+	def delete(self,request,*args,**kwargs):
+		return self.destroy(request,*args,**kwargs)
+
+
+urls.py :-
+
+
+from django import views
+from django.contrib import admin
+from django.urls import path
+from api import views
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('studentapi/',views.StudentList.as_view()),
+    # path('studentapi/',views.StudentCreate.as_view()),
+    # path('studentapi/<int:pk>/',views.StudentRetrive.as_view()),
+    # path('studentapi/<int:pk>/',views.StudentUpdate.as_view()), 
+    path('studentapi/<int:pk>/',views.StudentDestroy.as_view()), 
+]
+
+
+Note :- 
+Group :- 1 (Not need of pk (primary key)) 
+
+class StudentList(GenericAPIView , ListModelMixin)
+class StudentCreate(GenericAPIView , CreateModelMixin)
+
+
+Group :- 2 (Need of pk (primary key)) 
+
+class StudentRetrive(GenericAPIView , RetrieveModelMixin)
+class StudentUpdate(GenericAPIView , UpdateModelMixin)
+class StudentDestroy(GenericAPIView , DestroyModelMixin)
+
+
+Practical Examples :- (Combine Multiple Classes)
+
+# GenericAPIView and  Model Mixin 
+
+views.py :-
+
+from .models import Student
+from .serializers import StudentSerializer
+from rest_framework.generics import GenericAPIView
+from rest_framework.mixins import ListModelMixin,CreateModelMixin,RetrieveModelMixin,UpdateModelMixin,DestroyModelMixin
+
+# Not need of Pk(primary key)
+class LCStudentAPI(GenericAPIView , ListModelMixin,CreateModelMixin):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+	def get(self,request,*args,**kwargs):
+		return self.list(request,*args,**kwargs)
+
+	def post(self,request,*args,**kwargs):
+		return self.create(request,*args,**kwargs)
+
+
+# Need of Pk(primary key)
+class RUDStudentAPI(GenericAPIView , RetrieveModelMixin,UpdateModelMixin,DestroyModelMixin):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+	def get(self,request,*args,**kwargs):
+		return self.retrieve(request,*args,**kwargs)
+
+	def put(self,request,*args,**kwargs):
+		return self.update(request,*args,**kwargs)
+
+	def delete(self,request,*args,**kwargs):
+		return self.destroy(request,*args,**kwargs)
+
+
+
+urls.py :-
+
+from django import views
+from django.contrib import admin
+from django.urls import path
+from api import views
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('studentapi/',views.LCStudentAPI.as_view()),
+    path('studentapi/<int:pk>/',views.RUDStudentAPI.as_view()), 
+]
+
+------------------------------------------------------------------------------------
+
+Concrete View Class :- 
+The following classes are the Concrete generics views.
+
+--> If you're using generic view this is normally the level you'll be working al unless you need heavily customized behavior.
+
+--> The view classes can be imported from rest_framework.generics.
+
+1. ListAPIView						1. ListCreateAPIView
+2. CreateAPIView					2. RetrieveUpdateAPIView
+3. RetrieveAPIView					3. RetrieveDestroyAPIView
+4. UpdateAPIView					4. RetrieveUpdateDestroyAPIView
+5. DestroyAPIView
+
+1. ListCreateAPIView :- It is used for read-only endpoints to repersent a collection of model instance.It provides a get method handler.
+
+Extends: GenericAPIView,ListModelMixin
+
+Examples :-
+
+from rest_framework.generics import ListAPIView
+class StudentList(ListAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+
+
+2. CreateAPIView :- It is used for create-only endpoints.It provides a post method handler.
+
+Extends : GenericAPIView,CreateModelMixin
+
+
+Examples :-
+
+from rest_framework.generics import CreateAPIView
+class StudentCreate(ListAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer
+
+3. RetrieveAPIView :- It is used for read-only endpoints to repersent a single model instance.It provides a get method handler.
+
+Examples :-
+
+from rest_framework.generics import RetrieveAPIView
+class StudentRetrive(ListAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer 
+
+4. UpdateAPIView :-It is used for update-only endpoints for a single model instance.It provides put and patch method handlers.
+
+Extends : GenericAPIView,UpdateModelMixin
+
+Examples :-
+
+from rest_framework.generics import UpdateAPIView
+class StudentUpdate(ListAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer 
+
+5. DestroyAPIView :- It is used for delete-only endpoints for a single models instance.It provides a delete method handler.
+
+Extend : GenericAPIView,DestroyModelMixin
+
+Examples :-
+
+from rest_framework.generics import DestroyAPIView
+class StudentDestroy(ListAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudentSerializer 
+
+
+Practical Examples :- 
+
+views.py :- 
+
+from .models import Student
+from .serializers import StudentSerializer
+from rest_framework.generics import ListAPIView,CreateAPIView,RetrieveAPIView,UpdateAPIView,DestroyAPIView
+
+class StudentList(ListAPIView):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+    
+class StudentCreate(CreateAPIView):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+
+class StudentRetrieve(RetrieveAPIView):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+    
+class StudentUpdate(UpdateAPIView):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+    
+class StudentDestroy(DestroyAPIView):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+
+
+
+urls.py :-
+urlpatterns = [
+
+	# path('studentapi/',views.StudentList.as_view()), 
+    # path('studentapi/',views.StudentCreate.as_view()), 
+    # path('studentapi/<int:pk>/',views.StudentRetrieve.as_view()), 
+    # path('studentapi/<int:pk>/',views.StudentUpdate.as_view()), 
+    # path('studentapi/<int:pk>/',views.StudentDestroy.as_view()), 
+]
+    
+
+----------------------------------------------------------------------------------------------------
+1. ListCreateAPIView :- It is used for read-write endpoints to present a collection of model instances.It provides get and post method handlers.
+
+Extends : GenericAPIView,ListModelMixin,CreateModelMixin
+
+Examples:-
+
+from rest_framework.generics import ListCreateAPIView
+class StudentListCreate(ListAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudendSerializer
+
+2. RetrieveUpdateAPIView :- It is used for read or update endpoints to repersent a single instance.It provides get,put and patch method handlers.
+
+Extends : GenericAPIView,RetrieveModelMixin,UpdateModelMixin
+
+Examples:-
+
+from rest_framework.generics import RetrieveUpdateAPIView
+class StudentRetriveUpdate(RetrieveUpdateAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudendSerializer
+
+3. RetrieveDestroyAPIView :- It is used for read or delete endpoints to repersent a single model instance.It provides get and delete method handlers.
+
+Extends : GenericAPIView,RetrieveModelMixin,DestroyModelMixin
+
+Examples:-
+
+from rest_framework.generics import RetrieveUpdateAPIView
+class StudentRetriveUpdate(RetrieveUpdateAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudendSerializer
+
+4. RetrieveUpdateDestroyAPIView :-It is used for read-write-delete endpoints to repersent a single model instance.It provides get,put,patch and delete method handlers.
+
+Extends : GenericAPIView,RetrieveModelMixin,DestroyModelMixin,UpdateModelMixin
+
+Examples:-
+
+from rest_framework.generics import RetrieveUpdateDestroyAPIView
+
+class StudentRetriveUpdate(RetrieveUpdateDestroyAPIView):
+	queryset=Student.objects.all()
+	serializer_class=StudendSerializer
+
+Practical Examples :-
+
+views.py:- 
+
+from .models import Student
+from .serializers import StudentSerializer
+from rest_framework.generics import ListCreateAPIView,RetrieveUpdateAPIView,RetrieveDestroyAPIView,RetrieveUpdateDestroyAPIView
+
+# Combine of two functions (Get&Create)
+
+class StudentListCreate(ListCreateAPIView):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+    
+class StudentRetrieveUpdate(RetrieveUpdateAPIView):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+    
+class StudentRetrieveDestroy(RetrieveDestroyAPIView):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+    
+class StudentRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+    
+urls.py :- 
+
+# Combine of two urls in one line (GET,CREATE)
+
+urlpatterns = [
+    # path('studentapi/',views.StudentLSCreate.as_view()), 
+    # path('studentapi/<int:pk>/',views.StudentRetrieveUpdate.as_view()),
+    # path('studentapi/<int:pk>/',views.StudentRetrieveDestroy.as_view()),
+    # path('studentapi/<int:pk>/',views.StudentRetrieveUpdateDestroyAPIView.as_view()),
+]
+
+# Standard Class Based CRUD model
+
+views.py :-
+
+from rest_framework.generics import ListCreateAPIView,RetrieveUpdateDestroyAPIView
+class StudentListCreate(ListCreateAPIView):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+
+class StudentRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+
+
+urls.py :- 
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('studentapi/',views.StudentListCreate.as_view()), 
+    path('studentapi/<int:pk>/',views.StudentRetrieveUpdateDestroyAPIView.as_view()),
+]
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+ViewSet :- Django REST framework allows you to Combine the logic for a set of related views in a single class, calles a ViewSet.
+
+--> There are two main advantages of using a ViewSet over using a view Class.
+	1. Repeated logic can be combined into a single class.
+	2. By using routers,we no loger need to deal with wiring up the URL conf ourselves.
+
+
+ViewSet Class :- A ViewSet class in simply a type of class-based View,that does not provide any method handlers such as get() or post(), and instead actions such as list() and create().
+
+1. list() :- Get All Records.
+2. retrieve() :- Get Single Records.
+3. create() :- Create/Insert Records.
+4. update() :- Update Records Completely.
+5. partial_update() :- Update Record Partially.
+6. destroy() :- Delete Record.
+
+How to create ViewSet Class :-
+
+from rest_framework import viewset
+class StudnetViewSet(viewsets.ViewSet):
+	def list(self,request): ..............
+	def create(self,request): ..............
+	def retrieve(self,request,pk=None): ..............
+	def update(self,request,pk=None): ..............
+	def partial_update(self,request,pk=None): ..............
+	def destroy(self,request,pk=None): ..............
+
+Benefits :-
+
+During dispatch, the following attributes are available on the ViewSet :-
+
+	1. basename - the base to use for the URL names that are created.
+	2. action - the name of the current action(e.g. list,create)
+	3. detail - boolean indicating if the current action is configured for the a list or detail view.
+	4. suffix - the display suffix for the viewset type-mirror the detail attribute.
+	5. descirption - the display descirption for the individual view of a viewset.
+
+How to Define Routers :-
+
+URLConfig.py :-
+	from django.urls import path,include
+	from api import views
+	from rest_framework.routers import DefaultRouter
+
+	router=DefaultRouter() <--- Creating Default Router object
+
+	router.register('studentapi',views.StudnetViewSet,basename='student')
+										^
+										|
+						(Register StudentViewSet with Router)	
+
+	urlpatterns = [
+		path('',include(router.urls)), <-- The API URLs are now determined automatically by the router.
+	]
+
+Practical Examples :-
+
+views.py :-
+
+from django.shortcuts import render
+from rest_framework.response import Response
+from .models import Student
+from .serializers import StudentSerializer
+from rest_framework import status
+from rest_framework import viewsets
+
+class StudentViewSet(viewsets.ViewSet):
+    def list(self,request):
+        print('******List**********')
+        print("Basename :",self.basename)
+        print("Action :",self.action)
+        print("Detail :",self.detail)
+        print("Suffix :",self.suffix)
+        print("Name :",self.name)
+        print("Description :",self.description)
+        stu=Student.objects.all()
+        serializer=StudentSerializer(stu,many=True)
+        return Response(serializer.data)
+    
+    def retrieve(self,request,pk=None):
+        print('******Retrieve**********')
+        print("Basename :",self.basename)
+        print("Action :",self.action)
+        print("Detail :",self.detail)
+        print("Suffix :",self.suffix)
+        print("Name :",self.name)
+        print("Description :",self.description)
+        id=pk
+        if id is not None:
+            stu=Student.objects.get(id=pk)
+            serializer=StudentSerializer(stu)
+            return Response(serializer.data)
+        
+    def create(self,request):
+        print('*******Create*********')
+        print("Basename :",self.basename)
+        print("Action :",self.action)
+        print("Detail :",self.detail)
+        print("Suffix :",self.suffix)
+        print("Name :",self.name)
+        print("Description :",self.description)
+        serializer=StudentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'Msg':'Data Created SuccessFully'},status=status.HTTP_201_CREATED)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST) 
+    
+    def update(self,request,pk):
+        print('******Update**********')
+        print("Basename :",self.basename)
+        print("Action :",self.action)
+        print("Detail :",self.detail)
+        print("Suffix :",self.suffix)
+        print("Name :",self.name)
+        print("Description :",self.description)
+        id=pk
+        stu=Student.objects.get(pk=id)
+        serializer=StudentSerializer(stu,data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'Msg':'Complete Data Updated'})
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST) 
+               
+    def partial_update(self,request,pk):
+        print('******Partial Update**********')
+        print("Basename :",self.basename)
+        print("Action :",self.action)
+        print("Detail :",self.detail)
+        print("Suffix :",self.suffix)
+        print("Name :",self.name)
+        print("Description :",self.description)
+        id=pk
+        stu=Student.objects.get(pk=id)
+        serializer=StudentSerializer(stu,data=request.data,partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'Msg':'Partial Data Updated'})
+        return Response(serializer.errors,status=status.HTTP_BAD_REQUEST) 
+               
+    def destroy(self,request,pk):
+        print('******Destroy**********')
+        print("Basename :",self.basename)
+        print("Action :",self.action)
+        print("Detail :",self.detail)
+        print("Suffix :",self.suffix)
+        print("Name :",self.name)
+        print("Description :",self.description)
+        id=pk
+        stu=Student.objects.get(pk=id)
+        stu.delete()
+        return Response({'Msg':'Data Deleted SuccessFully'})
+
+
+urls.py :-
+
+from django.contrib import admin
+from django.urls import path,include
+from api import views
+from rest_framework.routers import DefaultRouter
+
+# Creating Router Object
+router=DefaultRouter()
+
+#Register StudentViewSet with Router 
+router.register('studentapi',views.StudentViewSet,basename='student')
+
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include(router.urls)),
+]
+
+
+------------------------------------------------------------------------------------------------------------------
+
+ModelVeiwSet Class :- The ModelVeiwSet class inherits from GenericAPIViewand includs implementions for various actions,by mixing in the behavior of the various mixin classes.
+
+--> The actions provided by the ModelVeiwSet class are list(),retrieve(),create(),update(),partial_update(),and destroy(). You can use any of the standard attributes or method overrides provided by GenericAPIView.
+
+Ex :-
+
+class StudentViewSet(viewsets.ModelVeiwSet)
+	queryset=Student.objects.all()
+	serializer_class=StudendSerializer
+
+
+Practical Examples :-
+
+views.py :-
+
+from .models import Student
+from .serializers import StudentSerializer
+from rest_framework import viewsets
+
+class StudentModelViewSet(viewsets.ModelViewSet):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+
+
+urls.py :-
+
+from django.contrib import admin
+from django.urls import path,include
+from api import views
+from rest_framework.routers import DefaultRouter
+
+# Creating Router Object
+router=DefaultRouter()
+
+#Register StudentModelViewSet with Router 
+router.register('studentapi',views.StudentModelViewSet,basename='student')
+
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include(router.urls)),
+]
+
+-------------------------------------------------------------------------------------
+
+ReadOnlyModelViewSet Class :- The ReadOnlyModelViewSet class also inherits from GenericAPIView.As with ModelVeiwSet it also includes implementations for various actions, but unlike ModelViewSet only provides the 'read-only' actions,list() and retrieve(). You can use any of the standard attributes and method overrides availabel to GenericAPIView
+
+Ex :-
+class StudentReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset=Student.object.all()
+    serializer_class=StudendSerializer
+
+Practical Examples :-
+
+views.py :-
+
+from .models import Student
+from .serializers import StudentSerializer
+from rest_framework import viewsets
+
+class StudentReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+
+
+urls.py :-
+
+from django.contrib import admin
+from django.urls import path,include
+from api import views
+from rest_framework.routers import DefaultRouter
+
+# Creating Router Object
+router=DefaultRouter()
+
+#Register StudentReadOnlyModelViewSet with Router 
+router.register('studentapi',views.StudentReadOnlyModelViewSet,basename='student')
+
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include(router.urls)),
+]
+
+--------------------------------------------------------------------------------------------------------------------
+
+Why use Authentication & Permission ?
+--> Currently our API doesn't have any restrictions on who can edit or delete Date. We'd like to have some more advanced behavior in order to make sure that:
+
+1. Data is always associated with a creator.
+2. Only Authentication users may update or delete it.
+3. Only the creator of a Data update or delete it.
+4. Unauthenticated requests should have full read-only access.
+
+Authentication :- Authentication is the mechanism of associating an incoming request with a set of identifying creadentials,such as the user the request came from, or the token that it was signed with.The Permission and throttling policies can then use those creadentials to determine if the request should be permitted.
+
+Examples :- Facebook Login etc...
+
+--> Authentication is always run at the very start of the view,before the Permission and throttling checks occur, and before any other code is allowed to proceed.
+
+-->REST framework provides a number of Authentication schemes out of the box, and also allows you to implement custom schemes.
+
+    1. BasicAuthentication
+    2. Session Authentication
+    3. TokenAuthentication
+    4. RemoteUserAuthentication
+    5. Custom Authentication
+
+1. BasicAuthentication :- This authentications uses HTTP Basic authentication,signed aganist a user's username and password.
+
+--> Basic authentication is generally only appropriate for testing.
+--> If SuccessFully authenticated,Basic Authentication provides the following creadentials.
+
+    a. request.user will be a Django User instance.
+    b. request.auth will be None.
+
+--> Unauthenticated response that are denied permission will result in an HTTP401 Unauthorized response with an appropriate W W W - Authenticate header.
+
+Examples :- 
+ W W W - Authenticate:Basic realm="api"
+
+Note :- If you use Basic Authentication in production you most esure that your API is only available over https.
+
+--> You should also ensure that your API clients will always re-request the username and password at login, and will never store those details to persistent storage.
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+Permission :- Permission are used to grant or deny access for different classes of users to different parts of the API.
+
+--> Permission checks are always run at the very start of the view,before any other code is allowed to proceed.
+
+--> Permission checks will typically use the authentication information in the request.user and  request.auth properties to determine if the request should be permitted.
+
+Permission Classes :- Permission in REST framework are always defined as a list of permission classes.
+
+    1. AllowAny
+    2. IsAuthenticated
+    3. IsAdminUser
+    4. IsAuthenticatedOrReadOnly 
+    5. DjangoModelPermissions
+    6. DjangoModelPermissionsOrAnonReadOnly 
+    7. DjangoObjectPermissions
+    8. Custom Permissions
+
+1. AllowAny :- This AllowAny permission class will allow unrestricted access, regardless of if the request was authenticated or Unauthenticated.
+
+--> This permission is not strictly required,since you can achieve the same resutl by using an empty list or tuple for the permission settings, but you may find it useful to specify this class because it makes the intention explicit.
+
+2. IsAuthenticated :- The IsAuthenticated permission class will deny permission to any Unauthenticated user, and allow permission otherwise.
+
+--> This permission  is suitable if you want your API to only be accessible to registered user.
+
+3. IsAdminUser :- The IsAdminUser permission class will deny permission to any user, unless user.is_staff is True in which case permission will be allowed.
+
+--> The permission is suitable if you want your API to only be accessible to a subset of trusted administrators.
+ 
+
+# Super type :-
+        1. Normal Super
+        2. Staff/admin
+        3. SuperuserAdmin
+
+Practical Examples :- 
+
+admin.py :-
+
+from django.contrib import admin
+from .models import Student
+# Register your models here
+
+@admin.register(Student)
+
+class StudentAdmin(admin.ModelAdmin):
+    list_display=['id','name','roll','city']
+
+apps.py :-
+
+from django.apps import AppConfig
+class ApiConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'api'
+
+models.py :-
+
+from django.db import models
+# Create your models here.
+class Student (models.Model):
+    name=models.CharField(max_length=50)
+    roll=models.IntegerField()
+    city=models.CharField(max_length=50)
+
+serializers.py :-
+
+from rest_framework import serializers
+from .models import Student
+
+class StudentSerializer(serializers.ModelSerializer):
+    class  Meta:
+        model=Student
+        fields=['id','name','roll','city']
+       
+
+views.py :-
+
+# Authentication is applies in specifics classes/API 
+
+from .models import Student
+from .serializers import StudentSerializer
+from rest_framework import viewsets
+from rest_framework.authentication import BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
+
+
+class StudentModelViewSet(viewsets.ModelViewSet):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+    # Authentication
+    authentication_classes=[BasicAuthentication]
+    permission_classes=[IsAuthenticated]
+
+
+urls.py :-
+
+from django.contrib import admin
+from django.urls import path,include
+from api import views
+from rest_framework.routers import DefaultRouter
+
+# Creating Router Object
+router=DefaultRouter()
+
+#Register StudentModelViewSet with Router 
+router.register('studentapi',views.StudentModelViewSet,basename='student')
+
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include(router.urls)),
+]
+
+
+# Gobally Authentication applies :-
+
+settings.py :- 
+
+REST_FRAMEWORK ={
+    'DEFAULT_AUTHENTICATION_CLASSES':['rest_framework.authentication.BasicAuthentication'],
+    'DEFAULT_PERMISSION_CLASSES':['rest_framework.permissions.IsAuthenticated']
+}
+
+
+# Authentication Overrides :-
+
+views.py :- (Examples)
+
+# Authentication is applies in specifics classes/API 
+
+from .models import Student
+from .serializers import StudentSerializer
+from rest_framework import viewsets
+from rest_framework.authentication import BasicAuthentication
+from rest_framework.permissions import IsAuthenticated,AllowAny
+
+
+class StudentModelViewSet1(viewsets.ModelViewSet):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+
+#   authentication_classes=[BasicAuthentication]
+#   permission_classes=[IsAuthenticated]
+
+
+class StudentModelViewSet2(viewsets.ModelViewSet):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+
+
+class StudentModelViewSet3(viewsets.ModelViewSet):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+    # override authentications 
+    authentication_classes=[BasicAuthentication]
+    permission_classes=[AllowAny]
+
+class StudentModelViewSet4(viewsets.ModelViewSet):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+2. Session Authentication :- This authentication scheme uses Django's default session backend for authentication.Session authentication is appropriate for AJAX clients that are running in the same session context as your website.
+
+--> If successfully authenticated, SessionAuthentication provides the following credentials.
+
+request.user will be a Django User instance.
+request.auth will be None.
+
+--> Unauthenticated response that ar denied permission will result in an HTTP403 Forbidden response.
+
+--> If you're using an AJAX style API with SessionAuthentication.you'll need to make sure you include a valid CSRF token for any "unsafe" HTTP method calls,such as PUT,PATCH,POST or DELETE requests.
+
+Permission Classes :- Permission in REST framework are always defined as a list of permission classes.
+
+    1. AllowAny
+    2. IsAuthenticated
+    3. IsAdminUser
+    4. IsAuthenticatedOrReadOnly 
+    5. DjangoModelPermissions
+    6. DjangoModelPermissionsOrAnonReadOnly 
+    7. DjangoObjectPermissions
+    8. Custom Permissions
+
+ 4. IsAuthenticatedOrReadOnly :- The IsAuthenticatedOrReadOnly will allow authenticated users to perform any request. Requests for Unauthorised users will only be  permitted if the request method is one of the "safe" methods; GET,HEAD or OPTIONS.
+
+ --> This permission is suitable if you want to your API to allow read permission to anonymous users, and only allow write permissions to authentical users.
+
+Practical Examples :-
+
+views.py :-
+
+from .models import Student
+from .serializers import StudentSerializer
+from rest_framework import viewsets
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.permissions import IsAuthenticated,IsAdminUser,AllowAny,IsAuthenticatedOrReadOnly
+
+
+class StudentModelViewSet(viewsets.ModelViewSet):
+    queryset=Student.objects.all()
+    serializer_class=StudentSerializer  
+    # Particular classes apply at authentications    
+    authentication_classes=[SessionAuthentication]
+    # permission_classes=[IsAuthenticated]
+    # permission_classes=[AllowAny]
+    # permission_classes=[IsAdminUser] # this is only work where  staff_status  is true
+    permission_classes=[IsAuthenticatedOrReadOnly]
+
+
+urls.py :-
+
+from django.contrib import admin
+from django.urls import path,include
+from api import views
+from rest_framework.routers import DefaultRouter
+
+# Creating Router Object
+router=DefaultRouter()
+
+#Register StudentModelViewSet with Router 
+router.register('studentapi',views.StudentModelViewSet,basename='student')
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include(router.urls)),
+    # provides to Login and Logout 
+    path('auth/', include('rest_framework.urls',namespace='rest_framework'))    
+]
+
+
+5. DjangoModelPermissions:- This permission class ties into Django's standard django.contrib.auth model permissions. This permission must only be applied to views that have a queryset property set. Authorization will only be granted if the user is authencaticated and has the relevant model permissions assigned.
+
+    a. POST  request require the user to have the add permission on the model.
+
+    b. PUT or PATCH requests require the user to have the change permission on the model.
+
+    c.DELETE requests require the user to have the delete permisions on the model.
+
+--> The dafaults behaviour can also be overridden to support custom model permisions.
+
+For Examples :- You might want to include a view model permission for GET requests.
+
+--> To use custom model permisions,override DjangoModelPermissions and set the perms_map property.
+

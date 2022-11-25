@@ -1,0 +1,151 @@
+-----------------------------------------------------------------------data-cleaning-component.html---------------------------------------------------------------
+
+ <form class="example-form" method = "get" #userPost="ngForm" (ngSubmit)=getsqldone(userPost.value)>
+
+  <mat-form-field class="example-full-width" id="sqlform"  >
+    <mat-label >HOST/IP</mat-label>
+    <input matInput  name="host" type="text" ngModel>
+   
+  </mat-form-field><br>
+  <mat-form-field class="example-full-width" id="sqlform"  >
+    <mat-label>USER</mat-label>
+    <input matInput  name="user" type="text" ngModel>
+   
+  </mat-form-field><br>
+  <mat-form-field class="example-full-width" id="sqlform" >
+    <mat-label>PASSWORD</mat-label>
+    <input matInput  name="password" type="text" ngModel>
+   
+  </mat-form-field><br>
+  <mat-form-field class="example-full-width" id="sqlform">
+    <mat-label>DATABASE NAME </mat-label>
+    <input matInput  name="database_name" type="text" ngModel>
+   
+  </mat-form-field><br>
+  <mat-form-field class="example-full-width" id="sqlform">
+    <mat-label>DATABASE TYPE</mat-label>
+    <input matInput  name="database_type" type="text" ngModel>
+   
+  </mat-form-field><br>
+  <mat-form-field class="example-full-width" id="sqlform">
+    <mat-label>DATABASE PORT</mat-label>
+    <input matInput  name="database_port" type="text" ngModel>
+  </mat-form-field>
+   <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+         <button type="reset" class="btn btn-warn" >Reset</button>
+        <button type="submit" class="btn btn-success" >Submit</button>
+      </div>
+   <!-- (click)=getsqldone() -->
+ 
+</form>
+
+
+----------------------------------------------------------------------data-cleaning-component.ts-------------------------------------------------------------------
+
+
+ getsqldone(data:any) {
+
+ console.log(data);
+
+ this.SpinnerService.show(); 
+ this.DataCleaningService.getsqlconnectionbackup(data).subscribe((res: Response) => {
+  console.log("res print from ts"+res)
+  this.SpinnerService.hide();  
+
+ });
+ 
+ };
+
+
+
+--------------------------------------------------------------------------------services.ts-------------------------------------------------------------
+
+getsqlconnectionbackup(dic): Observable<any> {
+    console.log("hellllooooo123");
+    console.log(dic);
+    console.log(this.myurl);
+    console.log(this.db_name);
+
+
+                 let queryParams = new HttpParams();
+   
+    queryParams = queryParams.append("host",dic['host']);
+     queryParams = queryParams.append("user",dic['user']);
+      queryParams = queryParams.append("password",dic['password']);
+     queryParams = queryParams.append("database_name",dic['database_name']);
+      queryParams = queryParams.append("database_type",dic['database_type']);
+     queryParams = queryParams.append("database_port",dic['database_port']);
+const options = {
+ 
+headers: new HttpHeaders ({
+'Content-Type': 'application/json',
+'Authorization':'j1IiGSz7.gmQTHjCB7Nju62tWUOJfqrZ70ALLwWND',
+
+ 
+
+}),
+  body: {
+    host: dic['host'],
+    user: dic['user'],
+    password: dic['password'],
+    database_name: dic['database_name'],
+    database_type: dic['database_type'],
+    database_port: dic['database_port'],
+  },
+};
+
+
+
+
+
+        return this.http.get(this.myurl+"analyse/sqlbackup/"+this.db_name,{params:queryParams});
+
+  }
+
+
+_--------------------------------------------------------------------------------------view.py-----------------------------------------------------------------------------
+
+
+@api_view(['GET', 'POST'])
+def external_sql_management_warehouse(request,**kwargs):
+
+	if request.method == 'GET':
+		print(request.query_params.get('host'))
+		print(request.query_params.get('user'))
+		print(request.query_params.get('password'))
+		print(request.query_params.get('database_name'))
+		print(request.query_params.get('database_type'))
+		print(request.query_params.get('database_port'))
+		host=request.query_params.get('host')
+		user=request.query_params.get('user')
+		pwd=request.query_params.get('password')
+		db_name=request.query_params.get('database_name')
+		db_type=request.query_params.get('database_type')
+		port=request.query_params.get('database_port')
+
+		try:
+			db = db_name
+			connection = m.connect(host=host, user=user ,password=pwd, database=db)
+			cursor = connection.cursor()
+			cursor.execute("SET GLOBAL sql_mode = '';")
+			# Getting all the table names
+			cursor.execute('SHOW TABLES;')
+			table_names = []
+			for record in cursor.fetchall():
+				table_names.append(record[0])
+			backup_dbname = db + '_backup'
+			cursor.execute(f'DROP DATABASE IF EXISTS {backup_dbname}')
+			cursor.execute(f'DROP VIEW IF EXISTS {backup_dbname}')
+			try:
+				cursor.execute(f'CREATE DATABASE {backup_dbname}')
+			except:
+				pass
+			cursor.execute(f'USE {backup_dbname}')
+			for table_name in table_names:
+				cursor.execute(f'CREATE TABLE {table_name} SELECT * FROM {db}.{table_name}')
+			print("DATA BACKUP CREATED MR.ZIA")
+
+		except Exception as e:
+			raise e
+		return Response("external_sql_management_warehouse done")
